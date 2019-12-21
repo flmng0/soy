@@ -5,4 +5,11 @@ authors = ["Timothy Davis <tmthydvs@gmail.com>"]
 edition = "2018"
 description = "Interpolation library"
 
+license = "MIT"
+repository = "https://github.com/flmng0/soy"
+readme = "README.md"
+
+keywords = ["interpolation", "animation", "lerp", "maths"]
+categories = ["algorithms", "game-development", "mathematics"]
+
 [dependencies]
