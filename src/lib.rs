@@ -1,14 +1,43 @@
+//! # Soy
+//! Rust interpolation library.
+//!
+//! # Usage
+//! The main trait used for interpolation is [`soy::Lerper`]. It requires a
+//! single method, `calculate`, which calculates interpolation progression at a
+//! given time.
+//!
+//! Example implementing linear interpolation, taken directly from `soy`'s
+//! implementation:
+//! ```
+//! struct Linear;
+//!
+//! impl soy::Lerper for Linear {
+//!     fn calculate(&self, t: f32) -> {
+//!         t
+//!     }
+//! }
+//! ```
+//!
+//! [0]: trait.Lerper.html
+#![deny(missing_docs)]
+
+mod bezier;
+mod constants;
+
 use core::ops::{Add, Mul, Sub};
 
-/// Interpolate between two values given a tweening method.
+pub use bezier::{cubic_bezier, Bezier};
+pub use constants::*;
+
+/// Interpolate between two values given an interpolation method.
 ///
 /// # Arguments:
-/// - `tweener`: Tweening method to use.
+/// - `lerper`: Interpolation method to use.
 /// - `start`: Initial data point.
 /// - `end`: Final data point.
 /// - `t`: Amount to interpolate between the values.
 ///
-/// # Example:
+/// # Usage
 /// ```
 /// fn main() {
 ///     let start = 5.0;
@@ -21,66 +50,29 @@ use core::ops::{Add, Mul, Sub};
 ///     assert_eq!(half_way, 7.5);
 /// }
 /// ```
-pub fn lerp<T, D>(tweener: T, start: D, end: D, t: f32) -> D
+pub fn lerp<T, D>(lerper: T, start: D, end: D, t: f32) -> D
 where
-    T: Tween,
+    T: Lerper,
     D: Copy,
     D: Add<Output = D>,
     D: Sub<Output = D>,
     D: Mul<f32, Output = D>,
 {
-    start + (end - start) * tweener.calculate(t)
+    start + (end - start) * lerper.calculate(t)
 }
 
-/// Trait implemented by all tweening methods.
-pub trait Tween {
-    /// Given a timing function *y = f(t)*, this method calculates the _y_ value
+/// Trait implemented by all interpolating methods.
+pub trait Lerper {
+    /// Given a timing function _y = f(t)_, this method calculates the _y_ value
     /// at the given _t_.
-    fn calculate(self, t: f32) -> f32;
+    fn calculate(&self, t: f32) -> f32;
 }
 
-/// Function signature of a tweening function, used to construct a
-/// `soy::Function`.
-pub type TweenFunction = fn(f32) -> f32;
+/// Linear interpolator: _f(t) = t_.
+pub struct Linear;
 
-/// Timing function formed directly from a function.
-///
-/// TODO: Example usage
-pub struct Function(TweenFunction);
-
-impl Function {
-    /// Create a new Function tweener.
-    pub fn new(f: TweenFunction) -> Function {
-        Function(f)
-    }
-}
-
-impl Tween for Function {
-    fn calculate(self, t: f32) -> f32 {
-        (self.0)(t)
-    }
-}
-
-/// When using a cubic bezier as a function _y = f(x)_, only the _y_ coordinates
-/// of each point has an effect on the resulting transition.
-pub struct CubicBezier(pub f32, pub f32);
-
-impl CubicBezier {
-    /// Create a new cubic bezier, with provided _y_ values.
-    pub fn new(p: f32, q: f32) -> CubicBezier {
-        CubicBezier(p, q)
-    }
-}
-
-impl Tween for CubicBezier {
-    fn calculate(self, t: f32) -> f32 {
-        // https://en.wikipedia.org/wiki/Bézier_curve#Cubic_Bézier_curves
-        let CubicBezier(p, q) = self;
-
-        let a = 3.0 * (1.0 - t).powi(2) * t;
-        let b = 3.0 * (1.0 - t) * t.powi(2);
-        let c = t.powi(3);
-
-        a * p + b * q + c
+impl Lerper for Linear {
+    fn calculate(&self, t: f32) -> f32 {
+        t
     }
 }
